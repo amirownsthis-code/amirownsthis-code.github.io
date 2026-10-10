@@ -761,27 +761,37 @@
                     <div class="col-md-7">
                         <div class="contact-card-box">
                             <form id="contactForm" onsubmit="handleContactSubmit(event)">
+                                <input type="hidden" name="access_key" value="99efd65d-d6ce-491a-993c-4dd37015613b">
+                                <input type="hidden" name="from_name" value="Portfolio Visitor">
+                                <input type="hidden" name="subject" value="New Portfolio Inquiry for Muhammad Amir">
+
                                 <div class="form-row">
                                     <div class="form-group col-md-6">
                                         <label class="font-weight-bold small text-muted">YOUR NAME</label>
-                                        <input type="text" class="form-control" placeholder="John Doe" required>
+                                        <input type="text" name="name" class="form-control" placeholder="John Doe" required>
                                     </div>
                                     <div class="form-group col-md-6">
                                         <label class="font-weight-bold small text-muted">YOUR EMAIL</label>
-                                        <input type="email" class="form-control" placeholder="john@example.com" required>
+                                        <input type="email" name="email" class="form-control" placeholder="john@example.com" required>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="font-weight-bold small text-muted">SUBJECT</label>
-                                    <input type="text" class="form-control" placeholder="Project Inquiry / Job Opportunity" required>
+                                    <input type="text" name="message_subject" class="form-control" placeholder="Project Inquiry / Job Opportunity" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="font-weight-bold small text-muted">MESSAGE</label>
-                                    <textarea class="form-control" rows="4" placeholder="Tell me about your project or data requirement..." required></textarea>
+                                    <textarea name="message" class="form-control" rows="4" placeholder="Tell me about your project or data requirement..." required></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-danger btn-block py-2">Send Message</button>
+                                <button type="submit" id="submit-btn" class="btn btn-danger btn-block py-2">
+                                    <span id="btn-text">Send Message</span>
+                                    <span id="btn-spinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                </button>
                                 <div id="form-success-alert" class="alert alert-success mt-3 d-none">
-                                    Thank you! Your message has been sent. Muhammad Amir will respond shortly.
+                                    Thank you! Your message has been sent directly to Muhammad Amir's Gmail inbox.
+                                </div>
+                                <div id="form-error-alert" class="alert alert-danger mt-3 d-none">
+                                    Oops! Something went wrong. Please try emailing directly to <a href="mailto:amirownsthis@gmail.com" class="alert-link">amirownsthis@gmail.com</a>.
                                 </div>
                             </form>
                         </div>
@@ -1020,11 +1030,42 @@
                 });
             }
 
-            function handleContactSubmit(e) {
+            async function handleContactSubmit(e) {
                 e.preventDefault();
-                $('#form-success-alert').removeClass('d-none');
-                e.target.reset();
-                setTimeout(() => $('#form-success-alert').addClass('d-none'), 5000);
+                const form = e.target;
+                const submitBtn = $('#submit-btn');
+                const btnText = $('#btn-text');
+                const btnSpinner = $('#btn-spinner');
+                const successAlert = $('#form-success-alert');
+                const errorAlert = $('#form-error-alert');
+
+                successAlert.addClass('d-none');
+                errorAlert.addClass('d-none');
+                btnText.text('Sending...');
+                btnSpinner.removeClass('d-none');
+                submitBtn.prop('disabled', true);
+
+                try {
+                    const response = await fetch("https://api.web3forms.com/submit", {
+                        method: "POST",
+                        body: new FormData(form)
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        successAlert.removeClass('d-none');
+                        form.reset();
+                        setTimeout(() => successAlert.addClass('d-none'), 7000);
+                    } else {
+                        errorAlert.removeClass('d-none');
+                    }
+                } catch (err) {
+                    errorAlert.removeClass('d-none');
+                } finally {
+                    btnText.text('Send Message');
+                    btnSpinner.addClass('d-none');
+                    submitBtn.prop('disabled', false);
+                }
             }
 
             document.getElementById('year-span').textContent = new Date().getFullYear();
